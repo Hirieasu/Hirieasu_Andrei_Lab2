@@ -7,12 +7,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Hirieasu_Andrei_Lab2.Data;
 using Hirieasu_Andrei_Lab2.Models;
+using System.Linq.Expressions;
 
 namespace Hirieasu_Andrei_Lab2.Controllers
 {
     public class BooksController : Controller
     {
         private readonly LibraryContext _context;
+        private object await_context;
 
         public BooksController(LibraryContext context)
         {
@@ -20,13 +22,48 @@ namespace Hirieasu_Andrei_Lab2.Controllers
         }
 
         // GET: Books
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder,string currentFilter, string searchString,int? pageNumber)
         {
-              return _context.Books != null ? 
-                          View(await _context.Books.ToListAsync()) :
-                          Problem("Entity set 'LibraryContext.Books'  is null.");
-        }
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["TitleSort"] = String.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            ViewData["PriceSortParm"] = sortOrder == "Price" ? "price_desc" : "Price";
+           if(searchString!= null)
+            {
+                pageNumber = 1;
 
+            }
+           else
+            {
+                searchString = currentFilter;
+            }
+            ViewData["CurrentFilter"] = searchString;
+            var books = from b in _context.Books
+                        select b;
+            if(!String.IsNullOrEmpty(searchString))
+            {
+                books =books.Where(s => s.Title.Contains(searchString));
+
+            }
+            switch (sortOrder)
+            {
+                case "title_desc":
+                    books = books.OrderByDescending(b => b.Title);
+                    break;
+                case "Price":
+                    books = books.OrderBy(b => b.Price);
+                    break;
+                case "price_desc":
+                    books = books.OrderByDescending(b => b.Price);
+                    break;
+                default:
+                    books = books.OrderBy(b => b.Title);
+                    break;
+            }
+            int pageSize = 2;
+            return View(await PaginatedList<Book>.CreateAsync(books.AsNoTracking(), pageNumber ?? 1, pageSize));
+
+        }
+        
         // GET: Books/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -36,6 +73,9 @@ namespace Hirieasu_Andrei_Lab2.Controllers
             }
 
             var book = await _context.Books
+                .Include(s => s.Orders)
+                .ThenInclude(e=>e.Customer)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.ID == id);
             if (book == null)
             {
@@ -55,19 +95,33 @@ namespace Hirieasu_Andrei_Lab2.Controllers
         // POST: Books/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,Title,Author,Price")] Book book)
+        public async Task<IActionResult> EditPost(int? id)
         {
-            if (ModelState.IsValid)
+            
+            if (id == null)
             {
-                _context.Add(book);
-                await _context.SaveChangesAsync();
-                
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            ViewData["ID"] = new SelectList(_context.Authors, "ID", "FirstName",book.AuthorID);
-            return View(book);
+            var bookToUpdate = await _context.Books.FirstOrDefaultAsync(s => s.ID == id);
+            if (await TryUpdateModelAsync<Book>(bookToUpdate, "", s => s.Author, s => s.Title, s => s.Price))
+            {
+                try
+                {
+
+                    await _context.SaveChangesAsync();
+
+                    return RedirectToAction(nameof(Index));
+
+                }
+                catch (DbUpdateException/*ex*/)
+                {
+                    ModelState.AddModelError("", "Unable to save changes." + "Try again, and if the problem persists");
+                }
+            }
+               
+            return View(bookToUpdate);
         }
 
         // GET: Books/Edit/5
@@ -108,14 +162,7 @@ namespace Hirieasu_Andrei_Lab2.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!BookExists(book.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -124,7 +171,7 @@ namespace Hirieasu_Andrei_Lab2.Controllers
         }
 
         // GET: Books/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int? id, bool? saveChangesError=false)
         {
             if (id == null || _context.Books == null)
             {
@@ -132,10 +179,15 @@ namespace Hirieasu_Andrei_Lab2.Controllers
             }
 
             var book = await _context.Books
+                .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.ID == id);
             if (book == null)
             {
                 return NotFound();
+            }
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewData["ErrorMessage"] = "Delete failed. Try again";
             }
 
             return View(book);
@@ -146,23 +198,23 @@ namespace Hirieasu_Andrei_Lab2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Books == null)
-            {
-                return Problem("Entity set 'LibraryContext.Books'  is null.");
-            }
+            
             var book = await _context.Books.FindAsync(id);
-            if (book != null)
+            if (book == null)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            try
             {
                 _context.Books.Remove(book);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
-            
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
 
-        private bool BookExists(int id)
-        {
-          return (_context.Books?.Any(e => e.ID == id)).GetValueOrDefault();
+            
+          catch (DbUpdateException /*ex*/)
+            { }
+            return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
         }
     }
 }
