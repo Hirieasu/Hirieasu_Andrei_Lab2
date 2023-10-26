@@ -37,8 +37,10 @@ namespace Hirieasu_Andrei_Lab2.Controllers
                 searchString = currentFilter;
             }
             ViewData["CurrentFilter"] = searchString;
-            var books = from b in _context.Books
-                        select b;
+            var books = _context.Books
+                .Include(b => b.Author)
+                .Select(b => b);
+                       
             if(!String.IsNullOrEmpty(searchString))
             {
                 books =books.Where(s => s.Title.Contains(searchString));
@@ -59,7 +61,7 @@ namespace Hirieasu_Andrei_Lab2.Controllers
                     books = books.OrderBy(b => b.Title);
                     break;
             }
-            int pageSize = 2;
+            int pageSize = 3;
             return View(await PaginatedList<Book>.CreateAsync(books.AsNoTracking(), pageNumber ?? 1, pageSize));
 
         }
@@ -88,13 +90,48 @@ namespace Hirieasu_Andrei_Lab2.Controllers
         // GET: Books/Create
         public IActionResult Create()
         {
-            ViewData["ID"] = new SelectList(_context.Authors, "ID", "FirstName");
+            var authorList = _context.Authors.Select(x => new SelectListItem
+            {
+                Value = x.ID.ToString(),
+                Text = x.FirstName + " " + x.LastName
+            }).ToList();
+
+            ViewBag.AuthorID = new SelectList(authorList, "Value", "Text");
             return View();
         }
 
         // POST: Books/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Title,AuthorId,Price")] Book book)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    _context.Add(book);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Retrieve the author list as before
+                var authorList = _context.Authors.Select(x => new SelectListItem
+                {
+                    Value = x.ID.ToString(),
+                    Text = x.FirstName + " " + x.LastName
+                }).ToList();
+
+                ViewBag.AuthorID = new SelectList(authorList, "Value", "Text");
+            }
+            catch (DbUpdateException /* ex*/)
+            {
+                ModelState.AddModelError("", "Unable to save changes. " + "Try again, and if the problem persists ");
+            }
+
+            return View(book);
+        }
         [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditPost(int? id)
