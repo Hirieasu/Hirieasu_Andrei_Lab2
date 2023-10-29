@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hirieasu_Andrei_Lab2", "Hirieasu_Andrei_Lab2\Hirieasu_Andrei_Lab2.csproj", "{26142744-F75F-419A-8E9E-091B104CBBCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hirieasu_Andrei_Lab2", "Hirieasu_Andrei_Lab2\Hirieasu_Andrei_Lab2.csproj", "{26142744-F75F-419A-8E9E-091B104CBBCA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibraryModel", "..\Laboratorul 7\LibraryModel\LibraryModel.csproj", "{B9BFCC75-91D8-4FF5-8E82-EF8E9C79AC58}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibraryWebAPI", "..\Laboratorul 7\LibraryWebAPI\LibraryWebAPI.csproj", "{61B7FC91-468E-4EF0-B497-13A4852637EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{26142744-F75F-419A-8E9E-091B104CBBCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26142744-F75F-419A-8E9E-091B104CBBCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26142744-F75F-419A-8E9E-091B104CBBCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9BFCC75-91D8-4FF5-8E82-EF8E9C79AC58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9BFCC75-91D8-4FF5-8E82-EF8E9C79AC58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9BFCC75-91D8-4FF5-8E82-EF8E9C79AC58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9BFCC75-91D8-4FF5-8E82-EF8E9C79AC58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61B7FC91-468E-4EF0-B497-13A4852637EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61B7FC91-468E-4EF0-B497-13A4852637EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61B7FC91-468E-4EF0-B497-13A4852637EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61B7FC91-468E-4EF0-B497-13A4852637EF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
